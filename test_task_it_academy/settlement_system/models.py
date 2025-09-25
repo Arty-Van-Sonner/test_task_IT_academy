@@ -3,6 +3,7 @@ from typing import Iterable
 
 from django.db import models
 from django.db.models import Sum, Case, When, F
+from decimal import Decimal
 
 class Currency(models.Model):
     name = models.CharField(max_length=128, help_text='Full name of the currency. For example: "United States Dollar"')
@@ -40,7 +41,7 @@ class Wallet(models.Model):
         return f'{self.name} ({self.currency}) [{self.uuid}]'
     
     @property
-    def balance(self) -> float:
+    def balance(self) -> Decimal:
         balance = self.operations.aggregate(
             total_balance=Sum(
                 Case(
@@ -51,7 +52,13 @@ class Wallet(models.Model):
                 )
             )
         )['total_balance']
-        return round(float(balance if balance is not None else 0), 2) 
+        return (balance if balance is not None else Decimal('0')).quantize(Decimal('0.01'))
+
+    @balance.setter
+    def balance(self, value):
+        self.operations.all().delete()
+        new_operation = self.operations.create(amount=value, operation_type='DEPOSIT')
+        new_operation.save()
 
 class Operation(models.Model):
     OPERATION_TYPES = [
@@ -72,4 +79,8 @@ class Operation(models.Model):
         self.currency = Currency.default_currency()
         self.amount_of_wallet_currency = self.amount
         return super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.operation_type} {self.amount} for {self.wallet}"
 
+Currency.default_currency()
