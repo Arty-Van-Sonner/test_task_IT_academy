@@ -1,8 +1,14 @@
 from rest_framework import serializers
-from .models import Operation
+from .models import Wallet, Operation
+
+class WalletSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Wallet
+        fields = [
+            'name',
+        ]
 
 class OperationSerializer(serializers.ModelSerializer):
-    # description = serializers.TextField(read_only=True)
     class Meta:
         model = Operation
         fields = [

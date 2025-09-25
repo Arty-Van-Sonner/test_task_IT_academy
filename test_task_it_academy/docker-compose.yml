@@ -1,0 +1,22 @@
+services:
+  wallets_web:
+    container_name: wallets_web
+    build: .
+    ports:
+      - '8000:8000'
+    volumes:
+      - .:/app
+    command: >
+     sh -c "while ! pg_isready -h database -p 5432 > /dev/null; do echo waiting for database; sleep 1; done; python manage.py migrate && python manage.py initial_filling_database && python manage.py runserver 0.0.0.0:8000"
+    depends_on:
+      - database
+      
+  database:
+    container_name: database
+    image: postgres
+    ports:
+      - "5492:5432"
+    env_file:
+      - .env
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data/

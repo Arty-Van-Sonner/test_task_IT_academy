@@ -6,7 +6,7 @@ from django.db.models import Sum, Case, When, F
 from decimal import Decimal
 
 class Currency(models.Model):
-    name = models.CharField(max_length=128, help_text='Full name of the currency. For example: "United States Dollar"')
+    name = models.CharField(max_length=128, help_text='Full name of the currency. For example: "United States Dollar"', default='Test')
     code = models.CharField(max_length=3, unique=True, db_index=True, help_text='ISO 4217. It is a three-letter code. For example: "USD"')
     numeric_code = models.IntegerField(unique=True, db_index=True, help_text='ISO 4217. It is a three-digit numeric currency code. For example: 840')
     symbol = models.CharField(max_length=5, blank=True, help_text='A currency symbol. For example: "$"')
@@ -24,6 +24,7 @@ class Currency(models.Model):
                 code='RUB',
                 numeric_code='643',
                 symbol='₽',
+                is_active=True,
             )
             default_currency.save()
         else:
@@ -34,7 +35,7 @@ class Currency(models.Model):
 class Wallet(models.Model):
     name = models.CharField(max_length=256)
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=False)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)
     is_active = models.BooleanField(default=True)
     
     def __str__(self):
@@ -67,7 +68,7 @@ class Operation(models.Model):
     ]
     uuid = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     wallet = models.ForeignKey(Wallet, on_delete=models.CASCADE, null=False, related_name='operations')
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=False)
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, null=True)
     amount = models.DecimalField(max_digits=20, decimal_places=2)
     amount_of_wallet_currency = models.DecimalField(max_digits=20, decimal_places=2)
     timestamp = models.DateTimeField(auto_now_add=True)
@@ -82,5 +83,3 @@ class Operation(models.Model):
     
     def __str__(self):
         return f"{self.operation_type} {self.amount} for {self.wallet}"
-
-Currency.default_currency()

@@ -2,9 +2,17 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Wallet, Operation, Currency
-from .serializers import OperationSerializer
+from .serializers import WalletSerializer, OperationSerializer
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
+
+class WalletCreateView(APIView):
+    def post(self, request, format=None, *args, **kwargs): 
+        serializer = WalletSerializer(data=request.data)
+        if serializer.is_valid():
+            new_wallet = serializer.save()
+            return Response({'wallet': str(new_wallet)}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class WalletOperationView(APIView):
     def post(self, request, wallet_uuid, format=None, *args, **kwargs):
